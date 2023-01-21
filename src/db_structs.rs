@@ -115,6 +115,12 @@ pub struct TokenNumber {
 }
 
 #[derive(FromRow, Serialize)]
+pub struct TokenNumberPrimary {
+    pub num: i64,
+}
+
+
+#[derive(FromRow, Serialize)]
 pub struct Timeslots {
     time_start: String,
     available: bool,

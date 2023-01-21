@@ -301,9 +301,9 @@ impl Database {
             .await
     }
 
-    pub async fn view_new_token(&self, doctor_id: i64, date: &String) -> TokenNumber {
+    pub async fn view_new_token(&self, doctor_id: i64, date: &String) -> TokenNumberPrimary {
         let query = format!("select count(*) as num from tokens where doctor_id = {} and TO_CHAR(appointment_date, 'YYYY-MM-DD') = '{}'", doctor_id, date);
-        match sqlx::query_as::<_, TokenNumber>(&query)
+        match sqlx::query_as::<_, TokenNumberPrimary>(&query)
             .fetch_one(&self.connection)
             .await {
                 Ok(mut tn) => {
@@ -311,21 +311,21 @@ impl Database {
                     tn
                 }
                 Err(_) => {
-                    TokenNumber {
+                    TokenNumberPrimary {
                         num: 1
                     }
                 }
             }
     }
 
-    pub async fn view_current_token(&self,doctor_id: i64, date: &String) -> TokenNumber {
+    pub async fn view_current_token(&self,doctor_id: i64, date: &String) -> TokenNumberPrimary {
         let query = format!("select token_number as num from tokens where doctor_id = {} and TO_CHAR(appointment_date, 'YYYY-MM-DD') = '{}' and status = 'ongoing'", doctor_id, date);
-        match sqlx::query_as::<_, TokenNumber>(&query)
+        match sqlx::query_as::<_, TokenNumberPrimary>(&query)
             .fetch_one(&self.connection)
             .await {
                 Ok(tn) => tn,
                 Err(_) => {
-                    TokenNumber {
+                    TokenNumberPrimary {
                         num: 0
                     }
                 }
@@ -469,6 +469,58 @@ impl Database {
             Err(_) => return false,
         }
     }
+
+    pub async fn view_new_emergency_no(&self, doctor_id: i64, date: &String) -> TokenNumberPrimary {
+        let query = format!("select count(*) as num from emergency_appointments where doctor_id = {} and TO_CHAR(appointment_date, 'YYYY-MM-DD') = '{}'", doctor_id, date);
+        match sqlx::query_as::<_, TokenNumberPrimary>(&query)
+            .fetch_one(&self.connection)
+            .await {
+                Ok(mut tn) => {
+                    tn.num += 1;
+                    tn
+                }
+                Err(e) => {
+                    tracing::error!("Error, can't find emergencies, setting to 1: {}",e);
+                    TokenNumberPrimary {
+                        num: 1
+                    }
+                }
+            }
+    }
+
+    pub async fn add_new_emergency_app(
+        &self,
+        docid: i64,
+        patid: i64,
+        apptype: i64,
+        date: &String,
+        symptom: &String,
+    ) -> bool {
+        let Ok(naivedate) = NaiveDate::parse_from_str(date, "%Y-%m-%d") else {
+            tracing::error!("Couldn't parse date into NaiveDateTime");
+            return false;
+        };
+        let checkquery = format!("select doctor_id, patient_id, appointment_date, appointment_type from emergency_appointments where doctor_id = {} and patient_id = {} and TO_CHAR(appointment_date, 'YYYY-MM-DD') = '{}' and appointment_type = {}", docid, patid, date, apptype);
+        match sqlx::query(&checkquery).fetch_one(&self.connection).await {
+            Ok(_) => {
+                tracing::error!("This emergency already exists! Cancelling");
+                return false;
+            }
+            Err(_) => {
+                tracing::debug!("An error occurred, attempting to proceed");
+            }
+        }
+        let emergency_no = self.view_new_emergency_no(docid, date).await.num;
+        let query = format!("
+                    INSERT INTO emergency_appointments (doctor_id, patient_id, appointment_type, appointment_date, emergency_no, symptom) VALUES ({}, {}, {}, '{}', {}, '{}')
+                            ", docid, patid, apptype, naivedate, emergency_no, symptom);
+        match sqlx::query(&query).execute(&self.connection).await {
+            Ok(_) => return true,
+            Err(_) => return false,
+        }
+    }
+
+
 
     pub async fn cancel_appointment(&self, docid: i64, patid: i64, datetime: &String) -> bool {
         let query = format!("
