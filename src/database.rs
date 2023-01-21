@@ -402,6 +402,19 @@ impl Database {
         }
     }
 
+    pub async fn update_patient(&self, patient_id: i64, gender: &String, weight: i32, age: i32, blood_group: &String) -> bool {
+        let query = format!(
+            "
+                    update patients set weight = {}, age = {}, blood_group = '{}', gender = '{}' where id = {};
+                            ",
+            weight, age, blood_group, gender, patient_id
+        );
+        match sqlx::query(&query).execute(&self.connection).await {
+            Ok(_) => return true,
+            Err(_) => return false,
+        }
+    }
+
     pub async fn add_new_doctor(
         &self,
         name: &String,

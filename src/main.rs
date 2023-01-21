@@ -69,6 +69,7 @@ async fn main() {
         .route("/doctor/timeslots", post(doctor_timeslots))
         .route("/doctor/newtoken", post(doctor_newtoken))
         .route("/patient", post(patient))
+        .route("/patient/update", post(patient_update))
         .route("/emergency/find", get(emergency_find))
         .route("/find", get(find))
         .route("/login", post(login))
@@ -322,6 +323,36 @@ async fn patient(headers: HeaderMap, Json(payload): Json<PatientID>) -> Response
     }
     (code, Json(res)).into_response()
 }
+
+async fn patient_update(headers: HeaderMap, Json(payload): Json<PatientInfoInput>) -> Response {
+    tracing::debug!(
+        "Got request to update patient info corresponding to patient ID {}",
+        payload.patient_id
+    );
+    let mut code = StatusCode::OK;
+    let res = match database::init().await {
+        Some(conn) => {
+            if authenticate(&conn, headers, &payload.patient_id, false).await {
+                match conn.update_patient(payload.patient_id, &payload.gender, payload.weight, payload.age, &payload.blood_group).await {
+                    true => "Updated",
+                    false => {
+                        code = StatusCode::BAD_REQUEST;
+                        "Error while updating"
+                    }
+                }
+            } else {
+                code = StatusCode::UNAUTHORIZED;
+                "Error while updating"
+            }
+        }
+        None => {
+            code = StatusCode::INTERNAL_SERVER_ERROR;
+            "Error while updating"
+        }
+    };
+    (code, Json(res)).into_response()
+}
+
 
 async fn emergency_find(payload: Query<CityApptype>) -> Response {
     tracing::debug!(

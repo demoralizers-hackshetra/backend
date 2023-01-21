@@ -26,6 +26,19 @@ pub struct Patient {
 }
 
 #[derive(Deserialize)]
+pub struct PatientInfoInput {
+     #[serde(deserialize_with = "from_str")]
+    pub patient_id: i64,
+    pub gender: String,
+    #[serde(deserialize_with = "from_str")]
+    pub weight: i32,
+    #[serde(deserialize_with = "from_str")]
+    pub age: i32,
+    pub blood_group: String
+}
+
+
+#[derive(Deserialize)]
 pub struct DoctorDate {
     #[serde(deserialize_with = "from_str")]
     pub doctor_id: i64,
