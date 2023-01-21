@@ -56,12 +56,7 @@ Then, run the project using ```cargo run```. It will run on port 3000. For log m
 |/prevapp | POST | Displays the previous appointments for particular patient | patient_id (POST request) | Yes | appname (appointment type), status, phyorvirt, date, docname, prescription_id
 |/newprescription | POST | Creates a new prescription for the patient | patient_id, doctor_id, prescription, date | Yes | Status code based
 |/prescriptions | POST | Get the prescriptions issued to patient | patient_id | Yes | docname, date, prescription
-
-## Old Endpoints (untested)
-
-|URL| Type | Description | Parameters | Authentication Needed?
----|---|---|---|---
-|/cancelappointment | POST | Cancel a previously booked appointment | doctor_id, patient_id, datetime (specific format of YYYY-MM-DD and then 24 hour HH:MM:SS) | Yes
+|/cancelappointment | POST | Cancel a previously booked appointment | doctor_id, patient_id, date | Yes | Status code based
 
 ## Response Codes
 

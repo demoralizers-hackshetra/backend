@@ -612,7 +612,7 @@ async fn cancelappointment(headers: HeaderMap, Json(payload): Json<CancelAppoint
                     .cancel_appointment(
                         payload.doctor_id,
                         payload.patient_id,
-                        &payload.datetime,
+                        &payload.date,
                     )
                     .await;
                 if res {

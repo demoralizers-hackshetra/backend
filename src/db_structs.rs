@@ -121,7 +121,7 @@ pub struct CancelAppointment {
     pub doctor_id: i64,
     #[serde(deserialize_with = "from_str")]
     pub patient_id: i64,
-    pub datetime: String,
+    pub date: String,
 }
 
 #[derive(Deserialize)]
