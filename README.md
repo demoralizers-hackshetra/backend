@@ -30,18 +30,24 @@ Then, run the project using ```cargo run```. It will run on port 3000. For log m
 
 ## Endpoints
 
+|URL| Type | Description | Parameters | Authentication Needed? | Output
+---|---|---|---|---|---
+|/cities | GET | Gets all cities where doctors are available according to us | Nothing | No |  Array of 'city' key and value is name of city
+|/find| GET | Finds doctors in city specified who can give appointment for specified appointment type | city, apptype (both as queries in URL) | No | Array of address, appid (appointment ID), apptype (Appointment type), city, docid (doctor ID), docname (doctor's name), price (price they charge for that service)
+|/doctors | POST | Displays doctors in a particular city | city (POST request) | No | address, docid (doctor ID), docname (doctor's name), specname (specialization name)
+|/doctor/timeslots | POST | Gets the timeslots in which doctor is available along with whether or not it has already been booked | doctor_id, date (specific format of YYYY-MM-DD)| No | Array of time_start (which is when the timeslot actually starts) and available (boolean of whether or not the doctor is available, ie that appointment slot is available), along with slot_id
+|/newappointment | POST | Add new appointment to database | doctor_id, patient_id, apptype (as an ID), date (specific format of YYYY-MM-DD), phyorvirt (just write either physical or virtual checkup), slot_id, symptom | Yes | HTTP Status Code 200 if booked, something else if not, refer to table below to interpret status codes
+
+## Old Endpoints (untested)
+
 |URL| Type | Description | Parameters | Authentication Needed?
 ---|---|---|---|---
-|/find| GET | Finds doctors in city specified who can give appointment for specified appointment type | city, apptype (both as queries in URL) | No
 |/prevapp | POST | Displays the previous appointments for particular patient | patient_id (POST request) | Yes
-|/doctors | POST | Displays doctors in a particular city | city (POST request) | No
 |/patient | POST | Displays info about patient | patient_id (POST request) | Yes
 |/newpatient | POST | Adds patient details to database | name, phone, email, password | Will be used for signup process
 |/specialities | GET | Gets speciality details | Nothing | No
 |/apptypes | GET | Gets appointment types | Nothing | No
-|/cities | GET | Gets all cities where doctors are available according to us | Nothing | No
 |/newdoctor | POST | Adds doctor details to database | name, speciality (as an ID), city, address, phone, email, password | Will be used for signup process
-|/newappointment | POST | Add new appointment to database | doctor_id, patient_id, apptype (as an ID), datetime (specific format of YYYY-MM-DD and then 24 hour HH:MM:SS), phyorvirt (just write either physical or virtual checkup), status (cancelled, fulfilled, scheduled), prescription | Yes
 |/cancelappointment | POST | Cancel a previously booked appointment | doctor_id, patient_id, datetime (specific format of YYYY-MM-DD and then 24 hour HH:MM:SS) | Yes
 |/login | POST | Generate JWT for a user (doctor or patient) | email, password | No (JWT is used as token to get authentication implemented)
 |/prescriptions | POST | Get the doctor name, date and time, and prescription text previously given | patient_id | Yes
