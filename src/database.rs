@@ -192,20 +192,13 @@ impl Database {
 
     pub async fn view_prev_appointments(&self, patient_id: i64) -> Vec<PrevAppointments> {
         let query = format!("
-                    (select d.name as docname, TO_CHAR(a.date_time, 'YYYY-MM-DD HH24:MM:SS') as timestamp, a.type as apptype, a.status as appstatus, a.prescription as prescription, p.name as appname
-                    from patients_previous_appointments a
-                    join doctors d on d.id = a.doctor_id
-                    join specialities p on p.id = a.appointment_type
-                    where a.patient_id = {}
-                    order by timestamp desc)
-                    UNION
-                    (select d.name as docname, TO_CHAR(a.date_time, 'YYYY-MM-DD HH24:MM:SS') as timestamp, a.type as apptype, a.status as appstatus, a.prescription as prescription, p.name as appname
+                    select d.name as docname, TO_CHAR(a.date_time, 'YYYY-MM-DD HH24:MM:SS') as timestamp, a.type as apptype, a.status as appstatus, a.prescription as prescription, p.name as appname
                     from appointments a
                     join doctors d on d.id = a.doctor_id
                     join specialities p on p.id = a.appointment_type
                     where a.patient_id = {}
-                    order by timestamp desc)
-                    ;", patient_id, patient_id);
+                    order by timestamp desc
+                    ;", patient_id);
         self.get_query_result::<PrevAppointments, Postgres>(&query)
             .await
     }

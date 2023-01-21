@@ -25,7 +25,6 @@ async fn authenticate(
     given_id: &i64,
     isdoctor: bool,
 ) -> bool {
-    return true;
     let Some(entry) = headers.get(AUTHORIZATION) else {
         tracing::error!("No JWT given in request, denying access..");
         return false;
@@ -352,7 +351,7 @@ async fn newappointment(headers: HeaderMap, Json(payload): Json<Appointment>) ->
                         .into_response();
                 }
             } else {
-                return (StatusCode::BAD_REQUEST, Json("Error while inserting")).into_response();
+                return (StatusCode::UNAUTHORIZED, Json("Error while inserting")).into_response();
             }
         }
         None => {
