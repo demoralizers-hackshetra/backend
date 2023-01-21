@@ -216,7 +216,7 @@ impl Database {
     pub async fn view_patient_info(&self, patient_id: i64) -> Vec<PatientInfo> {
         let query = format!(
             "
-                    select name, email, phone
+                    select name, email, phone, age, gender, blood_group, weight
                     from patients
                     where id = {}
                     ;",

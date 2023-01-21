@@ -129,6 +129,10 @@ pub struct PatientInfo {
     name: String,
     email: String,
     phone: String,
+    gender: String,
+    weight: i32,
+    age: i32,
+    blood_group: String
 }
 
 #[derive(FromRow, Serialize)]
