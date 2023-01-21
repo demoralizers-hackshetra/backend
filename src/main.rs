@@ -196,6 +196,22 @@ async fn doctors(Json(payload): Json<City>) -> Response {
     (code, Json(res)).into_response()
 }
 
+
+async fn doctor_curtoken(Json(payload): Json<DoctorDate>) -> Response {
+    tracing::debug!("Got request to get current ongoing token for doctor ID {}", payload.doctor_id);
+    let mut code = StatusCode::OK;
+    let res = match database::init().await {
+        Some(conn) => conn.view_current_token(payload.doctor_id, &payload.date).await,
+        None => {
+            code = StatusCode::BAD_REQUEST;
+            TokenNumber {
+                num: 0,
+            }
+        }
+    };
+    (code, Json(res)).into_response()
+}
+
 async fn doctor_newtoken(Json(payload): Json<DoctorDate>) -> Response {
     tracing::debug!("Got request to predict new token for doctor ID {}", payload.doctor_id);
     let mut code = StatusCode::OK;
