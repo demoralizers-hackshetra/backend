@@ -283,9 +283,10 @@ impl Database {
 
     pub async fn view_doctor_appointments(&self, doctor_id: i64) -> Vec<DoctorAppointments> {
         let query = format!(
-            "select id, patient_id, appointment_type as apptype,
-            TO_CHAR(date_time, 'YYYY-MM-DD HH24:MM:SS') as datetime,
-            type as phyorvirt, status, prescription from appointments where doctor_id = {} order by date_time
+            "
+            select id, patient_id, appointment_type as apptype,
+            TO_CHAR(appointment_date, 'YYYY-MM-DD') as date,
+            type as phyorvirt, status, slot_id from appointments where doctor_id = {} order by date
             ", doctor_id
         );
         self.get_query_result::<DoctorAppointments, Postgres>(&query)
@@ -354,16 +355,14 @@ impl Database {
             tracing::error!("Couldn't parse date into NaiveDateTime");
             return false;
         };
-        /*
         //check if no appointment has been booked at same time
         let doctorapps = self.view_doctor_appointments(docid).await;
         for app in doctorapps.iter() {
-            if app.datetime == *date && app.status != "cancelled" {
+            if app.slot_id as i64 == slot_id && app.status != "cancelled" {
                 tracing::error!("Appointment has already been booked");
                 return false;
             }
         }
-        */
         let query = format!("
                     INSERT INTO Appointments (doctor_id, patient_id, appointment_type, appointment_date, slot_id, type, status, symptom) VALUES ({}, {}, {}, '{}', {}, '{}', 'scheduled', '{}')
                             ", docid, patid, apptype, naivedate, slot_id, phyorvirt, symptom);
