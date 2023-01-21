@@ -116,6 +116,26 @@ CREATE TABLE IF NOT EXISTS Tokens (
     CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled', 'ongoing'))
 );
 
+ALTER TABLE Tokens ADD CONSTRAINT unique_token_per_day_doctor UNIQUE (doctor_id, token_number, appointment_date);
+
+-- - help keep track of emergency appointments
+CREATE TABLE IF NOT EXISTS Emergency_Appointments (
+    id BIGSERIAL PRIMARY KEY,
+    doctor_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    appointment_type INT NOT NULL,
+    appointment_date TIMESTAMP NOT NULL,
+    emergency_no INT NOT NULL,
+    prescription_id INT,
+    symptom VARCHAR(255) NOT NULL,
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(id),
+    FOREIGN KEY (patient_id) REFERENCES Patients(id),
+    FOREIGN KEY (appointment_type) REFERENCES Appointment_Types(id),
+    FOREIGN KEY (prescription_id) REFERENCES Prescriptions(id)
+);
+
+ALTER TABLE Emergency_Appointments ADD CONSTRAINT unique_emergency_per_day_doctor UNIQUE (doctor_id, emergency_no, appointment_date);
+
 -- - keep track of notifications to deliver
 CREATE TABLE IF NOT EXISTS Notifications (
     id BIGSERIAL PRIMARY KEY ,
