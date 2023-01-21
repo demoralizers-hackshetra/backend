@@ -1,3 +1,6 @@
+-- - set timezone
+SET TIMEZONE TO 'Asia/Kolkata';
+
 -- - info about various specialities
 CREATE TABLE IF NOT EXISTS Specialities (
     id BIGSERIAL PRIMARY KEY ,
@@ -47,7 +50,24 @@ CREATE TABLE IF NOT EXISTS Patients (
     gender CHAR(1),
     weight INT,
     age INT,
-    blood_group VARCHAR(255),
+    blood_group VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS Prescriptions (
+    id BIGSERIAL PRIMARY KEY,
+    patient_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    prescription TEXT,
+    appointment_date TIMESTAMP NOT NULL,
+    FOREIGN KEY (patient_id) REFERENCES Patients(id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(id)
+);
+
+-- - stores slots the doctor sets
+CREATE TABLE IF NOT EXISTS Doctor_Slots (
+    id BIGSERIAL PRIMARY KEY,
+    doctor_id INT NOT NULL,
+    time_start TIME WITH TIME ZONE NOT NULL
 );
 
 -- - help doctors keep track of their appointments with patients
@@ -56,16 +76,17 @@ CREATE TABLE IF NOT EXISTS Appointments (
     doctor_id INT NOT NULL,
     patient_id INT NOT NULL,
     appointment_type INT NOT NULL,
-    appointment_date DATE WITH TIMEZONE NOT NULL,
+    appointment_date TIMESTAMP NOT NULL,
     slot_id INT NOT NULL,
     type VARCHAR(255) NOT NULL,
     status VARCHAR(255) NOT NULL,
     symptom VARCHAR(255) NOT NULL,
-    prescription TEXT,
+    prescription_id INT NOT NULL,
     FOREIGN KEY (doctor_id) REFERENCES Doctors(id),
     FOREIGN KEY (patient_id) REFERENCES Patients(id),
     FOREIGN KEY (appointment_type) REFERENCES Appointment_Types(id),
     FOREIGN KEY (slot_id) REFERENCES Doctor_Slots(id),
+    FOREIGN KEY (prescription_id) REFERENCES Prescriptions(id),
     CONSTRAINT chk_type CHECK (type IN ('physical', 'virtual')),
     CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled'))
 );
@@ -76,22 +97,15 @@ CREATE TABLE IF NOT EXISTS Tokens (
     doctor_id INT NOT NULL,
     patient_id INT NOT NULL,
     appointment_type INT NOT NULL,
-    appointment_date DATE WITH TIMEZONE NOT NULL,
+    appointment_date TIMESTAMP NOT NULL,
     token_number INT NOT NULL,
     status VARCHAR(255) NOT NULL,
-    prescription TEXT,
+    prescription_id INT NOT NULL,
     FOREIGN KEY (doctor_id) REFERENCES Doctors(id),
     FOREIGN KEY (patient_id) REFERENCES Patients(id),
     FOREIGN KEY (appointment_type) REFERENCES Appointment_Types(id),
-    FOREIGN KEY (slot_id) REFERENCES Doctor_Slots(id),
+    FOREIGN KEY (prescription_id) REFERENCES Prescriptions(id),
     CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled'))
-);
-
--- - stores slots the doctor sets
-CREATE TABLE IF NOT EXISTS Doctor_Slots (
-    id BIGSERIAL PRIMARY KEY,
-    doctor_id INT NOT NULL,
-    time_start TIME WITH TIME ZONE NOT NULL,
 );
 
 -- - keep track of notifications to deliver
