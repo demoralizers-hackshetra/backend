@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS Prescriptions (
 CREATE TABLE IF NOT EXISTS Doctor_Slots (
     id BIGSERIAL PRIMARY KEY,
     doctor_id INT NOT NULL,
-    time_start TIME WITH TIME ZONE NOT NULL
+    time_start TIMESTAMPTZ NOT NULL
 );
 
 -- - help doctors keep track of their appointments with patients
@@ -78,17 +78,17 @@ CREATE TABLE IF NOT EXISTS Appointments (
     appointment_type INT NOT NULL,
     appointment_date TIMESTAMP NOT NULL,
     slot_id INT NOT NULL,
-    type VARCHAR(255) NOT NULL,
     status VARCHAR(255) NOT NULL,
     symptom VARCHAR(255) NOT NULL,
-    prescription_id INT NOT NULL,
+    prescription_id INT,
+    type VARCHAR(255) NOT NULL,
     FOREIGN KEY (doctor_id) REFERENCES Doctors(id),
     FOREIGN KEY (patient_id) REFERENCES Patients(id),
     FOREIGN KEY (appointment_type) REFERENCES Appointment_Types(id),
     FOREIGN KEY (slot_id) REFERENCES Doctor_Slots(id),
     FOREIGN KEY (prescription_id) REFERENCES Prescriptions(id),
-    CONSTRAINT chk_type CHECK (type IN ('physical', 'virtual')),
-    CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled'))
+    CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled', 'ongoing')),
+    CONSTRAINT chk_type CHECK (type IN ('physical', 'virtual'))
 );
 
 -- - help keep track of walk in token based patients
@@ -100,12 +100,13 @@ CREATE TABLE IF NOT EXISTS Tokens (
     appointment_date TIMESTAMP NOT NULL,
     token_number INT NOT NULL,
     status VARCHAR(255) NOT NULL,
-    prescription_id INT NOT NULL,
+    prescription_id INT,
+    symptom VARCHAR(255) NOT NULL,
     FOREIGN KEY (doctor_id) REFERENCES Doctors(id),
     FOREIGN KEY (patient_id) REFERENCES Patients(id),
     FOREIGN KEY (appointment_type) REFERENCES Appointment_Types(id),
     FOREIGN KEY (prescription_id) REFERENCES Prescriptions(id),
-    CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled'))
+    CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled', 'ongoing'))
 );
 
 -- - keep track of notifications to deliver

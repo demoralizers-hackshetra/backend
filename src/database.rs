@@ -166,30 +166,26 @@ impl Database {
     }
 
     //get time slots for a doctor
-    pub async fn view_doctor_timeslots(&self, doctor_id: i64) -> Vec<Timeslots> {
+    pub async fn view_doctor_timeslots(&self, doctor_id: i64, date: &String) -> Vec<Timeslots> {
         let query = format!("
-                    select time_start
-                    from doctor_slots
+                    select TO_CHAR(time_start::timestamp, 'HH24:MI:SS') as time_start,
+                    (CASE WHEN EXISTS (select x.slot_id from appointments x where doctor_id = {} and x.slot_id = slot_id and TO_CHAR(appointment_date, 'YYYY-MI-DD') = '{}') THEN false
+                    ELSE true END) as available
+                    from doctor_slots s
                     where doctor_id = {}
-                            ", doctor_id);
+                            ", doctor_id, date, doctor_id);
         self.get_query_result::<Timeslots, Postgres>(&query)
             .await
     }
 
     pub async fn view_prescriptions(&self, patient_id: i64) -> Vec<Prescriptions> {
         let query = format!("
-                    (select d.name as docname, TO_CHAR(a.date_time, 'YYYY-MM-DD HH24:MM:SS') as timestamp, a.prescription as prescription
-                    from patients_previous_appointments a
-                    join doctors d on d.id = a.doctor_id
-                    where a.patient_id = {}
-                    order by timestamp desc)
-                    UNION
-                    (select d.name as docname, TO_CHAR(a.date_time, 'YYYY-MM-DD HH24:MM:SS') as timestamp, a.prescription as prescription
-                    from appointments a
-                    join doctors d on d.id = a.doctor_id
-                    where a.patient_id = {}
-                    order by timestamp desc)
-                    ;", patient_id, patient_id);
+                    select d.name as docname, TO_CHAR(p.appointment_date, 'YYYY-MM-DD') as date,
+                    p.prescription from Prescriptions p
+                    join Doctors d on d.id = p.patient_id
+                    where p.patient_id = {}
+                    order by p.appointment_date desc;
+                    ;", patient_id);
         self.get_query_result::<Prescriptions, Postgres>(&query)
             .await
     }

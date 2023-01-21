@@ -1,6 +1,6 @@
 use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Postgres};
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -23,6 +23,13 @@ pub struct Patient {
     pub email: String,
     pub phone: String,
     pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct DoctorDate {
+    #[serde(deserialize_with = "from_str")]
+    pub doctor_id: i64,
+    pub date: String
 }
 
 #[derive(Deserialize)]
@@ -81,7 +88,8 @@ pub struct Registration {
 //outputs; SQL query -> sqlx -> these structs -> serde -> output JSON
 #[derive(FromRow, Serialize)]
 pub struct Timeslots {
-    time_start: i64,
+    time_start: String,
+    available: bool,
 }
 
 #[derive(FromRow, Serialize)]
