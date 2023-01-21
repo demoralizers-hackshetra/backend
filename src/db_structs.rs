@@ -63,10 +63,11 @@ pub struct Appointment {
     pub patient_id: i64,
     #[serde(deserialize_with = "from_str")]
     pub apptype: i64,
-    pub datetime: String,
+    #[serde(deserialize_with = "from_str")]
+    pub slot_id: i64,
+    pub date: String,
     pub phyorvirt: String,
-    pub status: String,
-    pub prescription: String,
+    pub symptom: String,
 }
 
 #[derive(Deserialize)]
@@ -90,6 +91,7 @@ pub struct Registration {
 pub struct Timeslots {
     time_start: String,
     available: bool,
+    slot_id: i64,
 }
 
 #[derive(FromRow, Serialize)]

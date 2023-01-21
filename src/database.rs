@@ -1,6 +1,6 @@
 //create structs for interfacing with the database
 use argon_hash_password;
-use chrono::NaiveDateTime;
+use chrono::NaiveDate;
 use dotenvy::dotenv;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use sqlx::{postgres::PgPoolOptions, postgres::PgRow, Pool, Postgres, Row};
@@ -170,7 +170,7 @@ impl Database {
         let query = format!("
                     select TO_CHAR(time_start::timestamp, 'HH24:MI:SS') as time_start,
                     (CASE WHEN EXISTS (select x.slot_id from appointments x where doctor_id = {} and x.slot_id = slot_id and TO_CHAR(appointment_date, 'YYYY-MI-DD') = '{}') THEN false
-                    ELSE true END) as available
+                    ELSE true END) as available, id as slot_id
                     from doctor_slots s
                     where doctor_id = {}
                             ", doctor_id, date, doctor_id);
@@ -345,25 +345,28 @@ impl Database {
         docid: i64,
         patid: i64,
         apptype: i64,
-        datetime: &String,
+        date: &String,
+        slot_id: i64,
         phyorvirt: &String,
-        status: &String,
-        prescription: &String,
+        symptom: &String,
     ) -> bool {
-        let Ok(naivedatetime) = NaiveDateTime::parse_from_str(datetime, "%Y-%m-%d %H:%M:%S") else {
-            tracing::error!("Couldn't parse date time into NaiveDateTime");
+        let Ok(naivedate) = NaiveDate::parse_from_str(date, "%Y-%m-%d") else {
+            tracing::error!("Couldn't parse date into NaiveDateTime");
             return false;
         };
+        /*
+        //check if no appointment has been booked at same time
         let doctorapps = self.view_doctor_appointments(docid).await;
         for app in doctorapps.iter() {
-            if app.datetime == *datetime && app.status != "cancelled" {
+            if app.datetime == *date && app.status != "cancelled" {
                 tracing::error!("Appointment has already been booked");
                 return false;
             }
         }
+        */
         let query = format!("
-                    insert into appointments (doctor_id, patient_id, appointment_type, date_time, type, status, prescription) values ({},{},{},'{}','{}','{}', '{}')
-                            ", docid, patid, apptype, naivedatetime, phyorvirt, status, prescription);
+                    INSERT INTO Appointments (doctor_id, patient_id, appointment_type, appointment_date, slot_id, type, status, symptom) VALUES ({}, {}, {}, '{}', {}, '{}', 'scheduled', '{}')
+                            ", docid, patid, apptype, naivedate, slot_id, phyorvirt, symptom);
         match sqlx::query(&query).execute(&self.connection).await {
             Ok(_) => return true,
             Err(_) => return false,

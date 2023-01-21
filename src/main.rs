@@ -338,10 +338,10 @@ async fn newappointment(headers: HeaderMap, Json(payload): Json<Appointment>) ->
                         payload.doctor_id,
                         payload.patient_id,
                         payload.apptype,
-                        &payload.datetime,
+                        &payload.date,
+                        payload.slot_id,
                         &payload.phyorvirt,
-                        &payload.status,
-                        &payload.prescription,
+                        &payload.symptom
                     )
                     .await;
                 if res {
