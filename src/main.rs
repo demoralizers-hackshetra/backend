@@ -74,6 +74,7 @@ async fn main() {
         .route("/newdoctor", post(newdoctor))
         .route("/newappointment", post(newappointment))
         .route("/newtoken", post(newtoken))
+        .route("/patient/token", post(patient_token))
         .route("/cancelappointment", post(cancelappointment))
         .route("/specialities", get(specialities))
         .route("/cities", get(cities))
@@ -203,6 +204,21 @@ async fn doctor_curtoken(Json(payload): Json<DoctorDate>) -> Response {
     let mut code = StatusCode::OK;
     let res = match database::init().await {
         Some(conn) => conn.view_current_token(payload.doctor_id, &payload.date).await,
+        None => {
+            code = StatusCode::BAD_REQUEST;
+            TokenNumber {
+                num: 0,
+            }
+        }
+    };
+    (code, Json(res)).into_response()
+}
+
+async fn patient_token(Json(payload): Json<DoctorPatientDate>) -> Response {
+    tracing::debug!("Got request to get token booked for patient ID {}", payload.patient_id);
+    let mut code = StatusCode::OK;
+    let res = match database::init().await {
+        Some(conn) => conn.get_patient_token(payload.doctor_id, payload.patient_id, &payload.date).await,
         None => {
             code = StatusCode::BAD_REQUEST;
             TokenNumber {

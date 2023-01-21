@@ -33,6 +33,15 @@ pub struct DoctorDate {
 }
 
 #[derive(Deserialize)]
+pub struct DoctorPatientDate {
+    #[serde(deserialize_with = "from_str")]
+    pub doctor_id: i64,
+    #[serde(deserialize_with = "from_str")]
+    pub patient_id: i64,
+    pub date: String
+}
+
+#[derive(Deserialize)]
 pub struct Doctor {
     pub name: String,
     #[serde(deserialize_with = "from_str")]
@@ -102,7 +111,7 @@ pub struct Registration {
 //outputs; SQL query -> sqlx -> these structs -> serde -> output JSON
 #[derive(FromRow, Serialize)]
 pub struct TokenNumber {
-    pub num: i64,
+    pub num: i32,
 }
 
 #[derive(FromRow, Serialize)]

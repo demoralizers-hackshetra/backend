@@ -306,6 +306,21 @@ impl Database {
             }
     }
 
+    pub async fn get_patient_token(&self, doctor_id: i64, patient_id: i64, date: &String) -> TokenNumber {
+        let query = format!("select token_number as num from tokens where doctor_id = {} and TO_CHAR(appointment_date, 'YYYY-MM-DD') = '{}' and patient_id = {}", doctor_id, date, patient_id);
+        match sqlx::query_as::<_, TokenNumber>(&query)
+            .fetch_one(&self.connection)
+            .await {
+                Ok(tn) => tn,
+                Err(e) => {
+                    TokenNumber {
+                        num: 0
+                    }
+                }
+            }
+    }
+
+
     pub async fn view_doctor_appointments(&self, doctor_id: i64) -> Vec<DoctorAppointments> {
         let query = format!(
             "

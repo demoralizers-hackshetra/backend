@@ -45,6 +45,7 @@ Then, run the project using ```cargo run```. It will run on port 3000. For log m
 |/newpatient | POST | Adds patient details to database | name, phone, email, password | Will be used for signup process | Status Code based
 |/newdoctor | POST | Adds doctor details to database | name, speciality (as an ID), city, address, phone, email, password | Will be used for signup process | Status Code based
 |/patient | POST | Displays info about patient | patient_id (POST request) | Yes | name, email, phone, gender, weight (in kg), blood_group
+|/patient/token | POST | Displays the token booked by patient | patient_id, doctor_id, date | Yes | num (token number the patient has been assigned)
 |/apptypes | GET | Gets appointment types | Nothing | No | id (appointment ID) and name
 |/specialities | GET | Gets speciality details | Nothing | No | id (speciality ID), desc (description), name
 
