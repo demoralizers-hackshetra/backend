@@ -312,7 +312,7 @@ impl Database {
             .fetch_one(&self.connection)
             .await {
                 Ok(tn) => tn,
-                Err(e) => {
+                Err(_) => {
                     TokenNumber {
                         num: 0
                     }
