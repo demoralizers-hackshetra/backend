@@ -88,6 +88,11 @@ pub struct Registration {
 
 //outputs; SQL query -> sqlx -> these structs -> serde -> output JSON
 #[derive(FromRow, Serialize)]
+pub struct TokenNumber {
+    pub num: i64,
+}
+
+#[derive(FromRow, Serialize)]
 pub struct Timeslots {
     time_start: String,
     available: bool,

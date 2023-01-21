@@ -66,6 +66,7 @@ async fn main() {
         .route("/doctorappointments", post(doctorappointments))
         .route("/doctors", post(doctors))
         .route("/doctor/timeslots", post(doctor_timeslots))
+        .route("/doctor/newtoken", post(doctor_newtoken))
         .route("/patient", post(patient))
         .route("/find", get(find))
         .route("/login", post(login))
@@ -192,6 +193,21 @@ async fn doctors(Json(payload): Json<City>) -> Response {
     if res.is_empty() && code == StatusCode::OK {
         code = StatusCode::BAD_REQUEST;
     }
+    (code, Json(res)).into_response()
+}
+
+async fn doctor_newtoken(Json(payload): Json<DoctorDate>) -> Response {
+    tracing::debug!("Got request to predict new token for doctor ID {}", payload.doctor_id);
+    let mut code = StatusCode::OK;
+    let res = match database::init().await {
+        Some(conn) => conn.view_new_token(payload.doctor_id, &payload.date).await,
+        None => {
+            code = StatusCode::BAD_REQUEST;
+            TokenNumber {
+                num: 0,
+            }
+        }
+    };
     (code, Json(res)).into_response()
 }
 
