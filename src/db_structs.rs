@@ -153,7 +153,7 @@ pub struct Timeslots {
 #[derive(FromRow, Serialize)]
 pub struct Prescriptions {
     docname: String,
-    timestamp: String,
+    date: String,
     prescription: String,
 }
 
