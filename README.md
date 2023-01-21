@@ -37,21 +37,22 @@ Then, run the project using ```cargo run```. It will run on port 3000. For log m
 |/doctors | POST | Displays doctors in a particular city | city (POST request) | No | address, docid (doctor ID), docname (doctor's name), specname (specialization name)
 |/doctor/timeslots | POST | Gets the timeslots in which doctor is available along with whether or not it has already been booked | doctor_id, date (specific format of YYYY-MM-DD)| No | Array of time_start (which is when the timeslot actually starts) and available (boolean of whether or not the doctor is available, ie that appointment slot is available), along with slot_id
 |/newappointment | POST | Add new appointment to database | doctor_id, patient_id, apptype (as an ID), date (specific format of YYYY-MM-DD), phyorvirt (just write either physical or virtual checkup), slot_id, symptom | Yes | HTTP Status Code 200 if booked, something else if not, refer to table below to interpret status codes
+|/doctorappointments | POST | Gets the doctor's appointments | patient_id (it recycles the same struct so just name it as such, it is interpreted as a doctor's ID only) | Yes | apptype, date, id (appointment ID),
+patient_id, phyorvirt, slot_id, status
+|/login | POST | Generate JWT for a user (doctor or patient) | email, password | No (JWT is used as token to get authentication implemented) | Gets a JWT in case login was successful, else check HTTP status code
+|/newpatient | POST | Adds patient details to database | name, phone, email, password | Will be used for signup process | Status Code based
+|/newdoctor | POST | Adds doctor details to database | name, speciality (as an ID), city, address, phone, email, password | Will be used for signup process | Status Code based
+|/patient | POST | Displays info about patient | patient_id (POST request) | Yes | name, email, phone
+|/apptypes | GET | Gets appointment types | Nothing | No | id (appointment ID) and name
+|/specialities | GET | Gets speciality details | Nothing | No | id (speciality ID), desc (description), name
 
 ## Old Endpoints (untested)
 
 |URL| Type | Description | Parameters | Authentication Needed?
 ---|---|---|---|---
 |/prevapp | POST | Displays the previous appointments for particular patient | patient_id (POST request) | Yes
-|/patient | POST | Displays info about patient | patient_id (POST request) | Yes
-|/newpatient | POST | Adds patient details to database | name, phone, email, password | Will be used for signup process
-|/specialities | GET | Gets speciality details | Nothing | No
-|/apptypes | GET | Gets appointment types | Nothing | No
-|/newdoctor | POST | Adds doctor details to database | name, speciality (as an ID), city, address, phone, email, password | Will be used for signup process
 |/cancelappointment | POST | Cancel a previously booked appointment | doctor_id, patient_id, datetime (specific format of YYYY-MM-DD and then 24 hour HH:MM:SS) | Yes
-|/login | POST | Generate JWT for a user (doctor or patient) | email, password | No (JWT is used as token to get authentication implemented)
 |/prescriptions | POST | Get the doctor name, date and time, and prescription text previously given | patient_id | Yes
-|/doctorappointments | POST | Gets the doctor's appointments | patient_id (it recycles the same struct so just name it as such, it is interpreted as a doctor's ID only) | Yes
 
 ## Response Codes
 
