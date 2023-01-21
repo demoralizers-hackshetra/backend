@@ -200,6 +200,18 @@ pub struct DoctorAppointments {
     pub status: String,
     #[serde(deserialize_with = "from_str")]
     pub slot_id: i32,
+    pub symptom: String,
+}
+
+#[derive(FromRow, Serialize)]
+pub struct EmergencyAppointments {
+    #[serde(deserialize_with = "from_str")]
+    id: i32,
+    #[serde(deserialize_with = "from_str")]
+    patient_id: i32,
+    #[serde(deserialize_with = "from_str")]
+    apptype: i32,
+    pub symptom: String,
 }
 
 #[derive(FromRow, Serialize)]

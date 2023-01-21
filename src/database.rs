@@ -352,10 +352,23 @@ impl Database {
             "
             select id, patient_id, appointment_type as apptype,
             TO_CHAR(appointment_date, 'YYYY-MM-DD') as date,
-            type as phyorvirt, status, slot_id from appointments where doctor_id = {} order by date
+            type as phyorvirt, status, slot_id, symptom from appointments where doctor_id = {} order by date
             ", doctor_id
         );
         self.get_query_result::<DoctorAppointments, Postgres>(&query)
+            .await
+    }
+
+    pub async fn view_doctor_emergencies(&self, doctor_id: i64, date: &String) -> Vec<EmergencyAppointments> {
+        let query = format!(
+            "
+            select emergency_no as id, patient_id, appointment_type as apptype,
+            symptom from emergency_appointments where doctor_id = {}
+            and TO_CHAR(appointment_date, 'YYYY-MM-DD') = '{}'
+            order by appointment_date
+            ", doctor_id, date
+        );
+        self.get_query_result::<EmergencyAppointments, Postgres>(&query)
             .await
     }
 

@@ -64,6 +64,7 @@ async fn main() {
         .route("/", get(root))
         .route("/prevapp", post(prevapp))
         .route("/doctorappointments", post(doctorappointments))
+        .route("/emergency/appointments", post(emergency_appointments))
         .route("/doctors", post(doctors))
         .route("/doctor/timeslots", post(doctor_timeslots))
         .route("/doctor/newtoken", post(doctor_newtoken))
@@ -124,6 +125,37 @@ async fn prescriptions(headers: HeaderMap, Json(payload): Json<PatientID>) -> Re
     }
     (code, Json(res)).into_response()
 }
+
+async fn emergency_appointments(headers: HeaderMap, Json(payload): Json<DoctorDate>) -> Response {
+    tracing::debug!(
+        "Got request to view emergency appointments for doctor ID {}",
+        payload.doctor_id
+    );
+    let mut code = StatusCode::OK;
+    let res = match database::init().await {
+        Some(conn) => {
+            if authenticate(&conn, headers, &payload.doctor_id, true).await {
+                let res = conn.view_doctor_emergencies(payload.doctor_id, &payload.date).await;
+                res
+            } else {
+                code = StatusCode::UNAUTHORIZED;
+                let res: Vec<EmergencyAppointments> = Vec::new();
+                res
+            }
+        }
+        None => {
+            code = StatusCode::INTERNAL_SERVER_ERROR;
+            let res: Vec<EmergencyAppointments> = Vec::new();
+            res
+        }
+    };
+    if res.is_empty() && code == StatusCode::OK {
+        code = StatusCode::BAD_REQUEST;
+    }
+    (code, Json(res)).into_response()
+}
+
+
 
 async fn doctorappointments(headers: HeaderMap, Json(payload): Json<PatientID>) -> Response {
     tracing::debug!(
