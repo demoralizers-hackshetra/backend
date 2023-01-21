@@ -63,6 +63,7 @@ async fn main() {
         .route("/prevapp", post(prevapp))
         .route("/doctorappointments", post(doctorappointments))
         .route("/doctors", post(doctors))
+        .route("/doctor_timeslots", post(doctor_timeslots))
         .route("/patient", post(patient))
         .route("/find", get(find))
         .route("/login", post(login))
@@ -183,6 +184,23 @@ async fn doctors(Json(payload): Json<City>) -> Response {
         None => {
             code = StatusCode::INTERNAL_SERVER_ERROR;
             let res: Vec<DoctorInfo> = Vec::new();
+            res
+        }
+    };
+    if res.is_empty() && code == StatusCode::OK {
+        code = StatusCode::BAD_REQUEST;
+    }
+    (code, Json(res)).into_response()
+}
+
+async fn doctor_timeslots(Json(payload): Json<PatientID>) -> Response {
+    tracing::debug!("Got request to view timeslots for doctor ID {}", payload.patient_id);
+    let mut code = StatusCode::OK;
+    let res = match database::init().await {
+        Some(conn) => conn.view_doctor_timeslots(payload.patient_id).await,
+        None => {
+            code = StatusCode::INTERNAL_SERVER_ERROR;
+            let res: Vec<Timeslots> = Vec::new();
             res
         }
     };

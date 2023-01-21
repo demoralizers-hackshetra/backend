@@ -40,10 +40,14 @@ CREATE TABLE IF NOT EXISTS Appointment_Prices (
 
 -- - info about patients
 CREATE TABLE IF NOT EXISTS Patients (
-    id BIGSERIAL PRIMARY KEY ,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    phone VARCHAR(255) NOT NULL
+    phone VARCHAR(255) NOT NULL,
+    gender CHAR(1),
+    weight INT,
+    age INT,
+    blood_group VARCHAR(255),
 );
 
 -- - help doctors keep track of their appointments with patients
@@ -52,19 +56,43 @@ CREATE TABLE IF NOT EXISTS Appointments (
     doctor_id INT NOT NULL,
     patient_id INT NOT NULL,
     appointment_type INT NOT NULL,
-    date_time TIMESTAMP NOT NULL,
+    appointment_date DATE WITH TIMEZONE NOT NULL,
+    slot_id INT NOT NULL,
     type VARCHAR(255) NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    symptom VARCHAR(255) NOT NULL,
+    prescription TEXT,
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(id),
+    FOREIGN KEY (patient_id) REFERENCES Patients(id),
+    FOREIGN KEY (appointment_type) REFERENCES Appointment_Types(id),
+    FOREIGN KEY (slot_id) REFERENCES Doctor_Slots(id),
+    CONSTRAINT chk_type CHECK (type IN ('physical', 'virtual')),
+    CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled'))
+);
+
+-- - help keep track of walk in token based patients
+CREATE TABLE IF NOT EXISTS Tokens (
+    id BIGSERIAL PRIMARY KEY ,
+    doctor_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    appointment_type INT NOT NULL,
+    appointment_date DATE WITH TIMEZONE NOT NULL,
+    token_number INT NOT NULL,
     status VARCHAR(255) NOT NULL,
     prescription TEXT,
     FOREIGN KEY (doctor_id) REFERENCES Doctors(id),
     FOREIGN KEY (patient_id) REFERENCES Patients(id),
     FOREIGN KEY (appointment_type) REFERENCES Appointment_Types(id),
-    CONSTRAINT chk_type CHECK (type IN ('physical', 'virtual')),
+    FOREIGN KEY (slot_id) REFERENCES Doctor_Slots(id),
     CONSTRAINT chk_status CHECK (status IN ('scheduled', 'fulfilled', 'cancelled'))
 );
 
--- - store old appointments in here with same schema as regular Appointments table
-CREATE TABLE IF NOT EXISTS Patients_Previous_Appointments () INHERITS (Appointments);
+-- - stores slots the doctor sets
+CREATE TABLE IF NOT EXISTS Doctor_Slots (
+    id BIGSERIAL PRIMARY KEY,
+    doctor_id INT NOT NULL,
+    time_start TIME WITH TIME ZONE NOT NULL,
+);
 
 -- - keep track of notifications to deliver
 CREATE TABLE IF NOT EXISTS Notifications (

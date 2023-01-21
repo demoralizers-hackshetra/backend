@@ -62,6 +62,120 @@ impl Database {
         }
     }
 
+    //tries to find patient/doctor logging in with credentials and gives JWT if successful
+    pub async fn login(&self, email: &String, password: &String) -> Option<String> {
+        let query = format!(
+            "
+                    select salt, password as hashedpass, isdoctor from login where email = '{}';
+                ",
+            email
+        );
+        match sqlx::query_as::<_, LoginTable>(&query)
+            .fetch_one(&self.connection)
+            .await
+        {
+            Ok(result) => {
+                let Ok(check) = argon_hash_password::check_password_matches_hash(
+                    password,
+                    &result.hashedpass,
+                    &result.salt,
+                ) else {
+                    tracing::debug!("Couldn't check password matches hash");
+                    return None;
+                };
+                if check {
+                    let mut tablename = "patients";
+                    if result.isdoctor {
+                        tablename = "doctors";
+                    }
+                    let query = format!(
+                        "
+                                    select id from {} where email = '{}';
+                                ",
+                        tablename, email
+                    );
+                    let Ok(queryres) = sqlx::query(&query)
+                        .fetch_one(&self.connection)
+                        .await else {
+                            tracing::error!("Error while checking login details in database");
+                            return None;
+                        };
+                    let Ok(id): Result<i64, _> = queryres.try_get("id") else {
+                        tracing::error!("Error while retrieving id from query result");
+                        return None;
+                    };
+                    let jwt = InternalJWT {
+                        isdoctor: result.isdoctor,
+                        id: id.to_string(),
+                        exp: 1000000,
+                    };
+                    let Ok(token) = encode(
+                        &Header::default(),
+                        &jwt,
+                        &EncodingKey::from_secret(&self.jwt_secret),
+                    ) else {
+                        tracing::debug!("Error while trying to encode JWT");
+                        return None;
+                    };
+                    Some(token)
+                } else {
+                    None
+                }
+            }
+            Err(_) => {
+                tracing::debug!("No such user found!");
+                None
+            }
+        }
+    }
+
+    pub fn verify_jwt(&self, jwt: &str) -> Option<JWT> {
+        let binding = match String::from(jwt)
+            .split("Bearer")
+            .collect::<Vec<&str>>()
+            .get(1)
+        {
+            Some(x) => x.to_string(),
+            None => jwt.to_string(),
+        };
+        let mut validation = Validation::default();
+        validation.validate_exp = false;
+        let token = binding.trim().to_string();
+        tracing::debug!("jwt : '{}'", token);
+        match decode::<InternalJWT>(
+            &token,
+            &DecodingKey::from_secret(&self.jwt_secret),
+            &validation,
+        ) {
+            Ok(token) => {
+                let Ok(id): Result<i64, _> = token.claims.id.parse() else {
+                    tracing::error!("Could not parse id while verifiying JWT");
+                    return None;
+                };
+                let res = JWT {
+                    isdoctor: token.claims.isdoctor,
+                    id,
+                };
+                Some(res)
+            }
+            Err(x) => {
+                tracing::debug!("{}", x);
+                None
+            }
+        }
+    }
+
+    //get time slots for a doctor
+    pub async fn view_doctor_timeslots(&self, doctor_id: i64) -> Vec<Timeslots> {
+        let query = format!("
+                    select time_start
+                    from doctor_slots
+                    where doctor_id = {}
+                            ", doctor_id);
+        self.get_query_result::<Timeslots, Postgres>(&query)
+            .await
+    }
+
     pub async fn view_prescriptions(&self, patient_id: i64) -> Vec<Prescriptions> {
         let query = format!("
                     (select d.name as docname, TO_CHAR(a.date_time, 'YYYY-MM-DD HH24:MM:SS') as timestamp, a.prescription as prescription
@@ -270,106 +384,4 @@ impl Database {
         }
     }
 
-    //tries to find patient/doctor logging in with credentials and gives JWT if successful
-    pub async fn login(&self, email: &String, password: &String) -> Option<String> {
-        let query = format!(
-            "
-                    select salt, password as hashedpass, isdoctor from login where email = '{}';
-                ",
-            email
-        );
-        match sqlx::query_as::<_, LoginTable>(&query)
-            .fetch_one(&self.connection)
-            .await
-        {
-            Ok(result) => {
-                let Ok(check) = argon_hash_password::check_password_matches_hash(
-                    password,
-                    &result.hashedpass,
-                    &result.salt,
-                ) else {
-                    tracing::debug!("Couldn't check password matches hash");
-                    return None;
-                };
-                if check {
-                    let mut tablename = "patients";
-                    if result.isdoctor {
-                        tablename = "doctors";
-                    }
-                    let query = format!(
-                        "
-                                    select id from {} where email = '{}';
-                                ",
-                        tablename, email
-                    );
-                    let Ok(queryres) = sqlx::query(&query)
-                        .fetch_one(&self.connection)
-                        .await else {
-                            tracing::error!("Error while checking login details in database");
-                            return None;
-                        };
-                    let Ok(id): Result<i64, _> = queryres.try_get("id") else {
-                        tracing::error!("Error while retrieving id from query result");
-                        return None;
-                    };
-                    let jwt = InternalJWT {
-                        isdoctor: result.isdoctor,
-                        id: id.to_string(),
-                        exp: 1000000,
-                    };
-                    let Ok(token) = encode(
-                        &Header::default(),
-                        &jwt,
-                        &EncodingKey::from_secret(&self.jwt_secret),
-                    ) else {
-                        tracing::debug!("Error while trying to encode JWT");
-                        return None;
-                    };
-                    Some(token)
-                } else {
-                    None
-                }
-            }
-            Err(_) => {
-                tracing::debug!("No such user found!");
-                None
-            }
-        }
-    }
-
-    pub fn verify_jwt(&self, jwt: &str) -> Option<JWT> {
-        let binding = match String::from(jwt)
-            .split("Bearer")
-            .collect::<Vec<&str>>()
-            .get(1)
-        {
-            Some(x) => x.to_string(),
-            None => jwt.to_string(),
-        };
-        let mut validation = Validation::default();
-        validation.validate_exp = false;
-        let token = binding.trim().to_string();
-        tracing::debug!("jwt : '{}'", token);
-        match decode::<InternalJWT>(
-            &token,
-            &DecodingKey::from_secret(&self.jwt_secret),
-            &validation,
-        ) {
-            Ok(token) => {
-                let Ok(id): Result<i64, _> = token.claims.id.parse() else {
-                    tracing::error!("Could not parse id while verifiying JWT");
-                    return None;
-                };
-                let res = JWT {
-                    isdoctor: token.claims.isdoctor,
-                    id,
-                };
-                Some(res)
-            }
-            Err(x) => {
-                tracing::debug!("{}", x);
-                None
-            }
-        }
-    }
 }
