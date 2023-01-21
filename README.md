@@ -51,12 +51,12 @@ Then, run the project using ```cargo run```. It will run on port 3000. For log m
 |/patient/token | POST | Displays the token booked by patient | patient_id, doctor_id, date | Yes | num (token number the patient has been assigned)
 |/apptypes | GET | Gets appointment types | Nothing | No | id (appointment ID) and name
 |/specialities | GET | Gets speciality details | Nothing | No | id (speciality ID), desc (description), name
+|/prevapp | POST | Displays the previous appointments for particular patient | patient_id (POST request) | Yes | appname (appointment type), status, phyorvirt, date, docname, prescription_id
 
 ## Old Endpoints (untested)
 
 |URL| Type | Description | Parameters | Authentication Needed?
 ---|---|---|---|---
-|/prevapp | POST | Displays the previous appointments for particular patient | patient_id (POST request) | Yes
 |/cancelappointment | POST | Cancel a previously booked appointment | doctor_id, patient_id, datetime (specific format of YYYY-MM-DD and then 24 hour HH:MM:SS) | Yes
 |/prescriptions | POST | Get the doctor name, date and time, and prescription text previously given | patient_id | Yes
 

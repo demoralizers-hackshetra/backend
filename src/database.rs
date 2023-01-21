@@ -192,12 +192,12 @@ impl Database {
 
     pub async fn view_prev_appointments(&self, patient_id: i64) -> Vec<PrevAppointments> {
         let query = format!("
-                    select d.name as docname, TO_CHAR(a.date_time, 'YYYY-MM-DD HH24:MM:SS') as timestamp, a.type as apptype, a.status as appstatus, a.prescription as prescription, p.name as appname
+                    select d.name as docname, TO_CHAR(a.appointment_date, 'YYYY-MM-DD') as date, a.type as phyorvirt, a.status as appstatus, a.prescription_id as prescription_id, p.name as appname
                     from appointments a
                     join doctors d on d.id = a.doctor_id
                     join specialities p on p.id = a.appointment_type
                     where a.patient_id = {}
-                    order by timestamp desc
+                    order by date desc
                     ;", patient_id);
         self.get_query_result::<PrevAppointments, Postgres>(&query)
             .await
@@ -533,12 +533,10 @@ impl Database {
         }
     }
 
-
-
-    pub async fn cancel_appointment(&self, docid: i64, patid: i64, datetime: &String) -> bool {
+    pub async fn cancel_appointment(&self, docid: i64, patid: i64, date: &String) -> bool {
         let query = format!("
-                    update appointments set status = 'cancelled' where doctor_id = {} and patient_id = {} and TO_CHAR(date_time, 'YYYY-MM-DD HH24:MI:SS') = '{}';
-                            ", docid, patid, datetime);
+                    update appointments set status = 'cancelled' where doctor_id = {} and patient_id = {} and TO_CHAR(appointment_date, 'YYYY-MM-DD') = '{}';
+                            ", docid, patid, date);
         match sqlx::query(&query).execute(&self.connection).await {
             Ok(_) => true,
             Err(_) => false,

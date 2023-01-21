@@ -137,10 +137,10 @@ pub struct Prescriptions {
 #[derive(FromRow, Serialize)]
 pub struct PrevAppointments {
     docname: String,
-    timestamp: String,
-    apptype: String,
+    date: String,
+    phyorvirt: String,
     appstatus: String,
-    prescription: String,
+    prescription_id: i32,
     appname: String,
 }
 
