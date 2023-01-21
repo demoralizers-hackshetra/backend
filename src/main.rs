@@ -83,6 +83,7 @@ async fn main() {
         .route("/specialities", get(specialities))
         .route("/cities", get(cities))
         .route("/apptypes", get(apptypes))
+        .route("/newprescription", post(newprescription))
         .route("/prescriptions", post(prescriptions))
         .layer(cors);
 
@@ -96,6 +97,35 @@ async fn main() {
 
 async fn root() -> &'static str {
     "Hello world"
+}
+
+async fn newprescription(headers: HeaderMap, Json(payload): Json<PrescriptionInfoInput>) -> Response {
+    tracing::debug!(
+        "Got request to add new prescription for patient ID {} and doctor ID {}",
+        payload.patient_id, payload.doctor_id
+    );
+    let mut code = StatusCode::OK;
+    let res = match database::init().await {
+        Some(conn) => {
+            if authenticate(&conn, headers, &(payload.patient_id as i64), true).await {
+                match conn.add_new_prescription(payload.doctor_id, payload.patient_id, &payload.prescription, &payload.date).await {
+                    true => "Inserted",
+                    false => {
+                        code = StatusCode::BAD_REQUEST;
+                        "Error while inserting"
+                    },
+                }
+            } else {
+                code = StatusCode::UNAUTHORIZED;
+                "Error while inserting"
+            }
+        }
+        None => {
+            code = StatusCode::INTERNAL_SERVER_ERROR;
+            "Error while inserting"
+        }
+    };
+    (code, Json(res)).into_response()
 }
 
 async fn prescriptions(headers: HeaderMap, Json(payload): Json<PatientID>) -> Response {

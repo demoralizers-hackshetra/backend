@@ -190,6 +190,26 @@ impl Database {
             .await
     }
 
+    pub async fn add_new_prescription(
+        &self,
+        doctor_id: i32,
+        patient_id: i32,
+        prescription: &String,
+        date: &String,
+    ) -> bool {
+        let Ok(naivedate) = NaiveDate::parse_from_str(date, "%Y-%m-%d") else {
+            tracing::error!("Couldn't parse date into NaiveDateTime");
+            return false;
+        };
+        let query = format!("
+                    insert into Prescriptions(patient_id, doctor_id, prescription, appointment_date) values ({}, {}, '{}', '{}');
+                            ", patient_id, doctor_id, prescription, naivedate);
+        match sqlx::query(&query).execute(&self.connection).await {
+            Ok(_) => return true,
+            Err(_) => return false,
+        }
+    }
+
     pub async fn view_prev_appointments(&self, patient_id: i64) -> Vec<PrevAppointments> {
         let query = format!("
                     select d.name as docname, TO_CHAR(a.appointment_date, 'YYYY-MM-DD') as date, a.type as phyorvirt, a.status as appstatus, a.prescription_id as prescription_id, p.name as appname
