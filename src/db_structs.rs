@@ -71,6 +71,19 @@ pub struct Appointment {
 }
 
 #[derive(Deserialize)]
+pub struct Token {
+    #[serde(deserialize_with = "from_str")]
+    pub doctor_id: i64,
+    #[serde(deserialize_with = "from_str")]
+    pub patient_id: i64,
+    #[serde(deserialize_with = "from_str")]
+    pub apptype: i64,
+    #[serde(deserialize_with = "from_str")]
+    pub date: String,
+    pub symptom: String,
+}
+
+#[derive(Deserialize)]
 pub struct CancelAppointment {
     #[serde(deserialize_with = "from_str")]
     pub doctor_id: i64,

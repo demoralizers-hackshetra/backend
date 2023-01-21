@@ -73,6 +73,7 @@ async fn main() {
         .route("/newpatient", post(newpatient))
         .route("/newdoctor", post(newdoctor))
         .route("/newappointment", post(newappointment))
+        .route("/newtoken", post(newtoken))
         .route("/cancelappointment", post(cancelappointment))
         .route("/specialities", get(specialities))
         .route("/cities", get(cities))
@@ -348,6 +349,41 @@ async fn newdoctor(Json(payload): Json<Doctor>) -> Response {
             } else {
                 tracing::error!("Record could not be inserted successfully");
                 return (StatusCode::BAD_REQUEST, Json("Error while inserting")).into_response();
+            }
+        }
+        None => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json("Error while inserting"),
+            )
+                .into_response();
+        }
+    }
+}
+
+async fn newtoken(headers: HeaderMap, Json(payload): Json<Token>) -> Response {
+    tracing::debug!("Got request to insert new token info");
+    match database::init().await {
+        Some(conn) => {
+            if authenticate(&conn, headers, &payload.patient_id, false).await {
+                let res = conn
+                    .add_new_token(
+                        payload.doctor_id,
+                        payload.patient_id,
+                        payload.apptype,
+                        &payload.date,
+                        &payload.symptom
+                    )
+                    .await;
+                if res {
+                    tracing::debug!("Record inserted successfully");
+                    return (StatusCode::OK, Json("Inserted")).into_response();
+                } else {
+                    return (StatusCode::BAD_REQUEST, Json("Error while inserting"))
+                        .into_response();
+                }
+            } else {
+                return (StatusCode::UNAUTHORIZED, Json("Error while inserting")).into_response();
             }
         }
         None => {

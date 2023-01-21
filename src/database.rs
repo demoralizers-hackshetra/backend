@@ -397,6 +397,38 @@ impl Database {
         }
     }
 
+    pub async fn add_new_token(
+        &self,
+        docid: i64,
+        patid: i64,
+        apptype: i64,
+        date: &String,
+        symptom: &String,
+    ) -> bool {
+        let Ok(naivedate) = NaiveDate::parse_from_str(date, "%Y-%m-%d") else {
+            tracing::error!("Couldn't parse date into NaiveDateTime");
+            return false;
+        };
+        let checkquery = format!("select doctor_id, patient_id, appointment_date, appointment_type from tokens where doctor_id = {} and patient_id = {} and TO_CHAR(appointment_date, 'YYYY-MM-DD') = '{}' and appointment_type = {}", docid, patid, date, apptype);
+        match sqlx::query(&checkquery).fetch_one(&self.connection).await {
+            Ok(_) => {
+                tracing::error!("This token already exists! Cancelling");
+                return false;
+            }
+            Err(_) => {
+                tracing::debug!("An error occurred, attempting to proceed");
+            }
+        }
+        let token_number = self.view_new_token(docid, date).await.num;
+        let query = format!("
+                    INSERT INTO Tokens (doctor_id, patient_id, appointment_type, appointment_date, token_number, status, symptom) VALUES ({}, {}, {}, '{}', {}, 'scheduled', '{}')
+                            ", docid, patid, apptype, naivedate, token_number, symptom);
+        match sqlx::query(&query).execute(&self.connection).await {
+            Ok(_) => return true,
+            Err(_) => return false,
+        }
+    }
+
     pub async fn cancel_appointment(&self, docid: i64, patid: i64, datetime: &String) -> bool {
         let query = format!("
                     update appointments set status = 'cancelled' where doctor_id = {} and patient_id = {} and TO_CHAR(date_time, 'YYYY-MM-DD HH24:MI:SS') = '{}';
