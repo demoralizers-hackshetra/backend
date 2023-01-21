@@ -20,6 +20,13 @@ CREATE TABLE IF NOT EXISTS Doctors (
     FOREIGN KEY (speciality_id) REFERENCES Specialities(id)
 );
 
+-- - doctor and emergency stuff, this is mostly beta rn
+CREATE TABLE IF NOT EXISTS Doctors_Emergency (
+    id BIGSERIAL PRIMARY KEY,
+    doctor_id INT NOT NULL,
+    available BOOLEAN NOT NULL
+);
+
 -- - generic appointment types stored here with some info about them and
 -- - restricted to specialities; doesn't make sense for pediatrician to provide
 -- - dental services for example

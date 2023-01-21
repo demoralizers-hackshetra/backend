@@ -250,6 +250,32 @@ impl Database {
             .await
     }
 
+    pub async fn view_doctor_prices_emergency(&self, city: &String, apptype: &String) -> Vec<DoctorPrices> {
+        let iscityspecified = match city.is_empty() {
+            false => format!("and d.city = '{}'", city),
+            true => String::new(),
+        };
+        let isapptypespecified = match apptype.is_empty() {
+            false => format!("and t.name = '{}'", apptype),
+            true => String::new(),
+        };
+
+        let query = format!(
+            "
+                    select d.id as docid, d.name as docname, d.city as city, d.address as address, t.name as apptype, t.id as appid, 2*p.price as price, spec.name as specname
+                    from doctors d
+                    join appointment_types t on d.speciality_id = t.speciality_id
+                    join specialities spec on spec.id = t.speciality_id
+                    join doctors_emergency e on e.doctor_id = d.id
+                    join appointment_prices p on d.id = p.doctor_id and t.id = p.appointment_type
+                    where 1=1 {} {};
+                    ",
+            isapptypespecified, iscityspecified
+        );
+        self.get_query_result::<DoctorPrices, Postgres>(&query)
+            .await
+    }
+
     pub async fn view_specialities(&self) -> Vec<Specialities> {
         let query = String::from(
             "select id, name, description as desc

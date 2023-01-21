@@ -68,6 +68,7 @@ async fn main() {
         .route("/doctor/timeslots", post(doctor_timeslots))
         .route("/doctor/newtoken", post(doctor_newtoken))
         .route("/patient", post(patient))
+        .route("/emergency/find", get(emergency_find))
         .route("/find", get(find))
         .route("/login", post(login))
         .route("/newpatient", post(newpatient))
@@ -280,6 +281,30 @@ async fn patient(headers: HeaderMap, Json(payload): Json<PatientID>) -> Response
         None => {
             code = StatusCode::INTERNAL_SERVER_ERROR;
             let res: Vec<PatientInfo> = Vec::new();
+            res
+        }
+    };
+    if res.is_empty() && code == StatusCode::OK {
+        code = StatusCode::BAD_REQUEST;
+    }
+    (code, Json(res)).into_response()
+}
+
+async fn emergency_find(payload: Query<CityApptype>) -> Response {
+    tracing::debug!(
+        "Got request to view all doctors with appointment type {} in city {} in emergency",
+        payload.apptype,
+        payload.city
+    );
+    let mut code = StatusCode::OK;
+    let res = match database::init().await {
+        Some(conn) => {
+            conn.view_doctor_prices_emergency(&payload.city, &payload.apptype)
+                .await
+        }
+        None => {
+            code = StatusCode::INTERNAL_SERVER_ERROR;
+            let res: Vec<DoctorPrices> = Vec::new();
             res
         }
     };

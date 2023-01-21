@@ -10,6 +10,11 @@ INSERT INTO Doctors (name, speciality_id, city, address, email, phone) VALUES
 ('Dr. Vikram Singh', 3, 'Bangalore', '9101112 Oak St', 'vikram.singh@example.com', '1212121212'),
 ('Dr. Anjali Gupta', 4, 'Chennai', '131415 Elm St', 'anjali.gupta@example.com', '3434343434');
 
+INSERT INTO Doctors_Emergency (doctor_id, available) VALUES
+(1, true),
+(2, true),
+(4, true);
+
 INSERT INTO Appointment_Types (name, speciality_id, description) VALUES
 ('Consultation', 1, 'Initial evaluation and diagnosis'),
 ('Follow-up', 1, 'Monitoring and treatment of ongoing condition'),
