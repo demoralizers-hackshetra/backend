@@ -54,6 +54,7 @@ Then, run the project using ```cargo run```. It will run on port 3000. For log m
 |/apptypes | GET | Gets appointment types | Nothing | No | id (appointment ID) and name
 |/specialities | GET | Gets speciality details | Nothing | No | id (speciality ID), desc (description), name
 |/prevapp | POST | Displays the previous appointments for particular patient | patient_id (POST request) | Yes | appname (appointment type), status, phyorvirt, date, docname, prescription_id
+|/newprescription | POST | Creates a new prescription for the patient | patient_id, doctor_id, prescription, date | Yes | Status code based
 
 ## Old Endpoints (untested)
 
