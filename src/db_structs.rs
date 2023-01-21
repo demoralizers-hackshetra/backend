@@ -140,6 +140,7 @@ pub struct DoctorPrices {
     apptype: String,
     appid: i64,
     price: i32,
+    specname: String,
 }
 
 #[derive(FromRow, Serialize)]
