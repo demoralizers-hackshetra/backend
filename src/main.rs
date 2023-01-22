@@ -68,6 +68,7 @@ async fn main() {
         .route("/doctors", post(doctors))
         .route("/doctor/timeslots", post(doctor_timeslots))
         .route("/doctor/newtoken", post(doctor_newtoken))
+        .route("/doctor/curtoken", post(doctor_curtoken))
         .route("/patient", post(patient))
         .route("/patient/update", post(patient_update))
         .route("/emergency/find", get(emergency_find))
