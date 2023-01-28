@@ -25,7 +25,6 @@ async fn authenticate(
     given_id: &i64,
     isdoctor: bool,
 ) -> bool {
-    return true;
     let Some(entry) = headers.get(AUTHORIZATION) else {
         tracing::error!("No JWT given in request, denying access..");
         return false;

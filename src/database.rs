@@ -168,11 +168,11 @@ impl Database {
     //get time slots for a doctor
     pub async fn view_doctor_timeslots(&self, doctor_id: i64, date: &String) -> Vec<Timeslots> {
         let query = format!("
-                    select TO_CHAR(time_start::timestamp, 'HH24:MI:SS') as time_start,
-                    (CASE WHEN EXISTS (select x.slot_id from appointments x where doctor_id = {} and x.slot_id = slot_id and TO_CHAR(appointment_date, 'YYYY-MI-DD') = '{}') THEN false
-                    ELSE true END) as available, id as slot_id
+                    select TO_CHAR(s.time_start::timestamp, 'HH24:MI:SS') as time_start,
+                    (CASE WHEN EXISTS (select 1 from appointments x where x.doctor_id = {} and x.slot_id = s.id and TO_CHAR(x.appointment_date, 'YYYY-MM-DD') = '{}') THEN false
+                    ELSE true END) as available, s.id as slot_id
                     from doctor_slots s
-                    where doctor_id = {}
+                    where s.doctor_id = {}
                             ", doctor_id, date, doctor_id);
         self.get_query_result::<Timeslots, Postgres>(&query)
             .await
@@ -470,7 +470,11 @@ impl Database {
         //check if no appointment has been booked at same time
         let doctorapps = self.view_doctor_appointments(docid).await;
         for app in doctorapps.iter() {
-            if app.slot_id as i64 == slot_id && app.status != "cancelled" {
+            let Ok(appdate) = NaiveDate::parse_from_str(&app.date, "%Y-%m-%d") else {
+                tracing::error!("Couldn't parse date into NaiveDateTime");
+                return false;
+            };
+            if app.slot_id as i64 == slot_id && appdate == naivedate && app.status != "cancelled" {
                 tracing::error!("Appointment has already been booked");
                 return false;
             }

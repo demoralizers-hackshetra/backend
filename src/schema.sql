@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS Doctor_Slots (
 
 -- - help doctors keep track of their appointments with patients
 CREATE TABLE IF NOT EXISTS Appointments (
-    id BIGSERIAL PRIMARY KEY ,
+    id BIGSERIAL PRIMARY KEY,
     doctor_id INT NOT NULL,
     patient_id INT NOT NULL,
     appointment_type INT NOT NULL,
