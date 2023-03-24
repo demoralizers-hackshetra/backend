@@ -1,0 +1,8 @@
+services:
+  - name: Vaidhya Backend
+    type: web
+    env:
+      RUST_LOG: debug
+    routes:
+      - path: /
+        target: 3000
